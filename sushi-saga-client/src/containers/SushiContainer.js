@@ -8,11 +8,9 @@ const SushiContainer = (props) => {
       <div className="belt">
         {
           props.fourItems.map(sushi => <Sushi sushi={sushi} key={sushi.id} 
-          chooseSushi={props.chooseSushi}
-          moneyRemaining={props.moneyRemaining}
-          sushiAlert={props.sushiAlert}/>)
+          eatSushi={props.eatSushi} eatenSushi={props.eatenSushi}/>)
         }
-      <MoreButton nextFour={props.nextFour}/>
+      <MoreButton next4Sushi={props.next4Sushi}/>
       </div>
     </Fragment>
   )

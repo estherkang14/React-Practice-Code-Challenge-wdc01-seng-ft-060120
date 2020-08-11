@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import SushiContainer from './containers/SushiContainer';
 import Table from './containers/Table';
+import Search from './components/Search';
+import Bank from './components/Bank';
 
 // Endpoint!
 const API = "http://localhost:3000/sushis/"
@@ -10,63 +12,96 @@ class App extends Component {
     super()
     this.state = {
       sushiData: [],
-      fourItems: [],
-      remainingSushi: [],
-      chosenSushi: {},
+      index: 0,
       moneyRemaining: 100,
-      eatenSushi: []
+      eatenSushi: [],
+      search: ''
     }
   }
 
   componentDidMount() {
     fetch(API)
     .then(response => response.json())
-    .then(sushiData => this.setState({ sushiData, fourItems: sushiData.slice(0, 4), remainingSushi: sushiData }))
+    .then(sushiData => this.setState({ sushiData }))
   }
 
   render() {
     return (
       <div className="app">
-        <SushiContainer sushiData={this.state.remainingSushi} 
-        fourItems={this.state.fourItems}
-        nextFour={this.nextFourSushis}
-        chooseSushi={this.chooseSushi}
-        moneyRemaining={this.state.moneyRemaining}
-        sushiAlert={this.sushiAlert}/>
-        <Table eatenSushi={this.state.eatenSushi} moneyRemaining={this.state.moneyRemaining}/>
+        <Bank withdrawMoney={this.withdrawMoney} />
+        
+        <Search sushiSearch={this.sushiSearch} />
+        
+
+        <SushiContainer  
+          fourItems={this.display4Sushi(this.filterSushi())}
+          next4Sushi={this.next4Sushi}
+          eatSushi={this.eatSushi}
+          eatenSushi={this.state.eatenSushi} />
+
+        <Table eatenSushi={this.state.eatenSushi} 
+          moneyRemaining={this.state.moneyRemaining} />
       </div>
     );
   }
 
-  nextFourSushis = () => {
-    let four = this.state.remainingSushi.splice(0, 4)
-    let updatedRemaining = this.state.remainingSushi 
-    let newestFour = this.state.remainingSushi.slice(0, 4)
+  display4Sushi = (sushi) => {
+    let index = this.state.index
+    
+    return sushi.slice(index, index + 4)
+  }
+
+  next4Sushi = () => {
+    let newIndex = this.state.index
+    newIndex += 4
+    if (newIndex >= this.state.sushiData.length) {
+      newIndex = 0 }
+
+    this.setState({ index: newIndex })
+  }
+
+  eatSushi = (sushi) => {
+    let money = this.state.moneyRemaining
+    if (money >= sushi.price) {
+      let eaten = [...this.state.eatenSushi]
+      if (!eaten.includes(sushi.id)) {
+        eaten.push(sushi.id)
+        this.setState({
+          eatenSushi: eaten,
+          moneyRemaining: money - sushi.price
+        })
+      } 
+    } else {
+      alert("You don't have enough money :(")
+    }
+  }
+
+  sushiSearch = (e) => {
+    e.preventDefault()
     this.setState({
-      fourItems: newestFour,
-      remainingSushi: updatedRemaining
+      search: e.target.value
     })
   }
 
-  chooseSushi = (sushi) => {
-    let eatSushi = {...sushi, clicked: true}
-    let ogFour = this.state.fourItems
-    let money = this.state.moneyRemaining
-    this.setState({
-      chosenSushi: eatSushi,
-      fourItems: ogFour.map(sushi => { if (sushi.id === eatSushi.id) {
-        return eatSushi
-      } else {
-        return sushi
-      }
-      }),
-      eatenSushi: [...this.state.eatenSushi, eatSushi],
-      moneyRemaining: money - eatSushi.price
-    }, () => console.log(eatSushi))
-  }
+  filterSushi = () => {
+    let filteredSushi = [...this.state.sushiData]
+    let search = this.state.search
+    let index = this.state.index 
+    if ( search !== '' ) {
+      filteredSushi = filteredSushi.filter( sushi => sushi.name.toLowerCase().includes(search.toLowerCase())
+      || sushi.price <= parseInt(search, 10))
+    }
 
-  sushiAlert = () => {
-    alert("Sorry! You don't have enough money :(")
+    return filteredSushi
+  }
+  
+  withdrawMoney = (e) => {
+    e.preventDefault()
+    let amt = parseInt(e.target.withdrawal.value, 10) + this.state.moneyRemaining 
+
+    this.setState({
+      moneyRemaining: amt
+    })
   }
 }
 
